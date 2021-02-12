@@ -290,9 +290,12 @@ class FroggerHelper(ScenarioHelper):
         return self.death_state
 
     def is_terminal_state(self, obs, rwd, done):
+        game_state = FroggerState.from_observation(obs)
+        fx, fy, fw, fh, fd = game_state.frog_info
         no_lives_rwd = self.config.rewards[NO_LIVES_RWD_ATTR]
         tick_rwd = self.config.rewards[TICK_RWD_ATTR]
-        hit_car_rwd = self.config.rewards[HIT_CAR_RWD_ATTR]
+        hit_car_rwd = self.config.rewards[HIT_CAR_RWD_ATTR] * (1 - (np.abs(fx - 6) * 0.05))
+        # hit_car_rwd = self.config.rewards[HIT_CAR_RWD_ATTR]
         hit_water_rwd = self.config.rewards[HIT_WATER_RWD_ATTR]
 
         return rwd == no_lives_rwd + hit_car_rwd + tick_rwd or \

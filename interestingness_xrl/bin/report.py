@@ -108,6 +108,7 @@ if __name__ == '__main__':
     full_analysis.set_helper(helper)
 
     # creates and load the agent's tables
+    print(f'#############{agent_dir}################\n')
     agent, exploration_strategy = create_agent(helper, DEF_AGENT_TYPE, None)
     agent.load(agent_dir)
 

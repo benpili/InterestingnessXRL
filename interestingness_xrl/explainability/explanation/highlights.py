@@ -4,15 +4,28 @@ __email__ = 'pedrodbs@gmail.com'
 import numpy as np
 import pandas as pd
 from os import makedirs
+import matplotlib.pyplot as plt
+from matplotlib import animation
 from os.path import join, exists
 from collections import deque
 from gym import Env
 from interestingness_xrl.util import record_video
 from interestingness_xrl.explainability.explanation import Explainer, fade_frame
 
+
 FADE_STEPS_PERCENT = .25  # percentage of total video time-steps used for fade-in/fade-out
 VIDEO_EXTENSION = 'mp4'
 NUMPY_EXTENSION = 'npz'
+
+
+def plot(img_list, root, fps=5):
+    # ploting a gif
+    fig = plt.figure(figsize=(8, 8))
+    plt.axis("off")
+    ims = [[plt.imshow(np.transpose(i, (0, 1, 2)), animated=True)] for i in img_list]
+    ani = animation.ArtistAnimation(fig, ims, interval=4000, repeat_delay=3000, blit=True)
+    writer = animation.PillowWriter(fps=5)
+    ani.save(root[:-3] + '.gif', writer=writer)
 
 
 class HighlightsExplainer(Explainer):
@@ -279,7 +292,7 @@ class HighlightsExplainer(Explainer):
         """
         if save_np_binary:
             np.savez_compressed('{}.{}'.format(file_name, NUMPY_EXTENSION), frames)
-        record_video(frames, '{}.{}'.format(file_name, VIDEO_EXTENSION), self.fps)
+        plot(frames, '{}.{}'.format(file_name, VIDEO_EXTENSION), self.fps)
 
     def _create_highlight(self, time_steps_frames):
         """

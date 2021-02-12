@@ -4,9 +4,12 @@ __email__ = 'pedrodbs@gmail.com'
 import gym
 import numpy as np
 import argparse
+import matplotlib.pyplot as plt
+from matplotlib import animation
 from os import makedirs
 from os.path import join, exists
 from gym.wrappers import Monitor
+from gym.wrappers.monitoring import video_recorder
 from interestingness_xrl.scenarios.configurations import EnvironmentConfiguration
 from interestingness_xrl.learning import write_table_csv
 from interestingness_xrl.learning.behavior_tracker import BehaviorTracker
@@ -18,6 +21,16 @@ DEF_TRIAL = 0
 FPS = 20
 SHOW_SCORE_BAR = True
 CLEAR_RESULTS = True
+
+
+def plot(img_list, root, fps=5):
+    # ploting a gif
+    fig = plt.figure(figsize=(8, 8))
+    plt.axis("off")
+    ims = [[plt.imshow(np.transpose(i, (0, 1, 2)), animated=True)] for i in img_list]
+    ani = animation.ArtistAnimation(fig, ims, interval=4000, repeat_delay=3000, blit=True)
+    writer = animation.PillowWriter(fps=5)
+    ani.save(f"{root}/video.gif", writer=writer)
 
 
 def video_schedule(config, videos):
@@ -68,13 +81,13 @@ def run_trial(args):
     # create environment and monitor
     env = gym.make(env_id)
     # todo
-    config.num_episodes = 100
+    config.num_episodes = 2000
     video_callable = video_schedule(config, args.record)
-    env = Monitor(env, directory=output_dir, force=True, video_callable=video_callable)
+    # env = Monitor(env, directory=output_dir, force=True, video_callable=video_callable)
 
-    # adds reference to monitor to allow for gym environments to update video frames
-    if video_callable(0):
-        env.env.monitor = env
+    # # adds reference to monitor to allow for gym environments to update video frames
+    # if video_callable(0):
+    #     env.env.monitor = env
 
     # initialize seeds (one for the environment, another for the agent)
     env.seed(config.seed + args.trial)
@@ -89,12 +102,10 @@ def run_trial(args):
 
     # runs episodes
     behavior_tracker = BehaviorTracker(config.num_episodes)
+    total_frames = []
     recorded_episodes = []
+    blank_frames = np.zeros((546, 440, 3))
     for e in range(config.num_episodes):
-
-        # checks whether to activate video monitoring
-        env.env.monitor = env if video_callable(e) else None
-
         # reset environment
         old_obs = env.reset()
         old_s = helper.get_state_from_observation(old_obs, 0, False)
@@ -104,9 +115,11 @@ def run_trial(args):
         exploration_strategy.update(e)
 
         t = 0
+        frames = []
         done = False
         while not done:
             # select action
+            frames.append(env.render())
             a = agent.act(old_s)
 
             # observe transition
@@ -122,13 +135,17 @@ def run_trial(args):
             old_s = s
             old_obs = obs
             t += 1
-
+        if e > 1980:
+            total_frames.extend(frames)
+        # for i in range(5):
+        #     total_frames.extend(blank_frames)
         # adds to recorded episodes list
         if video_callable(e):
             recorded_episodes.append(e)
 
         # signals new episode to tracker
         behavior_tracker.new_episode()
+    plot(total_frames, root=f'{output_dir}')
 
     # writes results to files
     agent.save(output_dir)
@@ -136,7 +153,6 @@ def run_trial(args):
     write_table_csv(recorded_episodes, join(output_dir, 'rec_episodes.csv'))
     helper.save_stats(join(output_dir, 'results'), CLEAR_RESULTS)
     print('\nResults of trial {} written to:\n\t\'{}\''.format(args.trial, output_dir))
-
     env.close()
 
 

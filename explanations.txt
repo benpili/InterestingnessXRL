@@ -1,0 +1,25 @@
+rec_episodes - סתם איזה אפיסודס יש
+q-table - ערכי q מסודרים לפי הסדר?
+state_features - אינדקס של המצבים ומה שמאפיין אותם
+dq-table - שגיאות ממוצעות של הq
+
+self.c_s = None
+        """ Contains information on the states counts/visits. """
+
+        self.c_sa = None
+        """ Contains information on the state-action pairs counts/visits. """
+
+        self.c_sas = None
+        """ Contains information on the state-action-next state transition counts/visits. """
+
+        self.r_sa = None
+        """ Contains information on the state-action pairs average received reward. """
+
+        self.t_s = None
+        """ Contains information on the last visits to states. """
+
+        self.t_sa = None
+        """ Contains information on the last time actions were executed in states. """
+
+        self.t = 0
+        """ The number of learning time-steps, i.e. the number of calls to agent.update(). """
